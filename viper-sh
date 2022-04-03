@@ -3,8 +3,7 @@
 JSONPATH="$(jq -r .gamepath "$XDG_CONFIG_HOME/viper.json" 2> /dev/null)"
 GAMEPATH="${GAMEPATH:-$JSONPATH}"
 
-LATESTVER=""
-LATESTZIP=""
+LATESTJSON=""
 
 [ "$GAMEPATH" = "" ] && {
 	echo "err: \$GAMEPATH not set, and or viper.json was not able to be read."
@@ -35,20 +34,15 @@ exclude() {
 	done
 }
 
-latestzip() {
-	[ "$LATESTZIP" = "" ] && {
-		LATESTZIP="$(curl --silent "https://api.github.com/repos/R2Northstar/Northstar/releases/latest" | jq -r .assets[0].browser_download_url)"
+latest() {
+	[ "$LATESTJSON" = "" ] && {
+		LATESTJSON="$(curl --silent 'https://api.github.com/repos/R2Northstar/Northstar/releases/latest')"
 	}
 
-	echo "$LATESTZIP"
-}
-
-latestver() {
-	[ "$LATESTVER" = "" ] && {
-		LATESTVER="$(curl --silent "https://api.github.com/repos/R2Northstar/Northstar/releases/latest" | jq -r .tag_name)"
-	}
-
-	echo "$LATESTVER"
+	case $1 in
+		"ver") /bin/echo "$LATESTJSON" | jq -r .tag_name;;
+		"zip") /bin/echo "$LATESTJSON" | jq -r .assets[0].browser_download_url;;
+	esac
 }
 
 for i in $@; do
@@ -56,14 +50,14 @@ for i in $@; do
 		"--update")
 			cd "$GAMEPATH"
 
-			[ "$(cat ns_version.txt 2> /dev/null)" = "$(latestver)" ] && {
+			[ "$(cat ns_version.txt 2> /dev/null)" = "$(latest ver)" ] && {
 				echo "$@" | grep -qe "--force" || {
 					echo "Already on newest version!"
 					exit 0
 				}
 			}
 			
-			ZIP="$(latestzip)"
+			ZIP="$(latest zip)"
 			LOCALZIP="$(echo $ZIP | sed 's/.*\///g')"
 
 			echo "Downloading zip..."
@@ -77,8 +71,8 @@ for i in $@; do
 
 			exclude --revert
 
-			latestver > ns_version.txt
-			echo "Finished updating to: $(latestver)"
+			latest ver > ns_version.txt
+			echo "Finished updating to: $(latest ver)"
 			;;
 		"--force") ;;
 		*)	echo "err: Unknown argument, '$i'";;

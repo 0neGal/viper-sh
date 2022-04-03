@@ -1,17 +1,24 @@
 #!/bin/sh
 
+ARGS="$@"
 JSONPATH="$(jq -r .gamepath "$XDG_CONFIG_HOME/viper.json" 2> /dev/null)"
 GAMEPATH="${GAMEPATH:-$JSONPATH}"
 
 LATESTJSON=""
 
+out() {
+	echo "$ARGS" | grep -qe "--quiet" || {
+		echo $@
+	}
+}
+
 [ "$GAMEPATH" = "" ] && {
-	echo "err: \$GAMEPATH not set, and or viper.json was not able to be read."
+	out "err: \$GAMEPATH not set, and or viper.json was not able to be read."
 	exit 1
 }
 
 [ ! -d "$GAMEPATH" ] && {
-	echo "err: '$GAMEPATH' does not exist!"
+	out "err: '$GAMEPATH' does not exist!"
 	exit 1
 }
 
@@ -55,7 +62,7 @@ for i in $@; do
 
 			[ "$(cat ns_version.txt 2> /dev/null)" = "$(latest ver)" ] && {
 				echo "$@" | grep -qe "--force" || {
-					echo "Already on newest version!"
+					out "Already on newest version!"
 					exit 1
 				}
 			}
@@ -63,25 +70,29 @@ for i in $@; do
 			ZIP="$(latest zip)"
 			LOCALZIP="$(echo $ZIP | sed 's/.*\///g')"
 
-			echo "Downloading zip..."
+			out "Downloading zip..."
 			wget "$ZIP" > /dev/null
 
 			exclude
 
-			echo "Extracting zip..."
+			out "Extracting zip..."
 			unzip -oqq "$LOCALZIP"
 			rm "$LOCALZIP"
 
 			exclude --revert
 
 			latest ver > ns_version.txt
-			echo "Finished updating to: $(latest ver)"
+			out "Finished updating to: $(latest ver)"
 			;;
 		"--force") ;;
 		"--daemon")
 			while true; do
 				getlatest
-				$0 --update
+				$0 --update --quiet && {
+					out "Finished updating to: $(latest ver)"
+				} || {
+					out "No new version found."
+				}
 
 				sleep 5m
 			done

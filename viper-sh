@@ -1,0 +1,54 @@
+#!/bin/sh
+
+JSONPATH="$(jq -r .gamepath "$XDG_CONFIG_HOME/viper.json" 2> /dev/null)"
+GAMEPATH="${GAMEPATH:-$JSONPATH}"
+
+LATESTVER=""
+LATESTZIP=""
+
+[ "$GAMEPATH" = "" ] && {
+	echo "err: \$GAMEPATH not set, and or viper.json was not able to be read."
+	exit 1
+}
+
+[ ! -d "$GAMEPATH" ] && {
+	echo "err: '$GAMEPATH' does not exist!"
+	exit 1
+}
+
+latestzip() {
+	[ "$LATESTZIP" = "" ] && {
+		LATESTZIP="$(curl --silent "https://api.github.com/repos/R2Northstar/Northstar/releases/latest" | jq -r .assets[0].browser_download_url)"
+	}
+
+	echo "$LATESTZIP"
+}
+
+latestver() {
+	[ "$LATESTVER" = "" ] && {
+		LATESTVER="$(curl --silent "https://api.github.com/repos/R2Northstar/Northstar/releases/latest" | jq -r .tag_name)"
+	}
+
+	echo "$LATESTVER"
+}
+
+for i in $@; do
+	case $i in
+		"--update")
+			cd "$GAMEPATH"
+			
+			ZIP="$(latestzip)"
+			LOCALZIP="$(echo $ZIP | sed 's/.*\///g')"
+
+			echo "Downloading zip..."
+			wget "$ZIP" > /dev/null
+			echo "Extracting zip..."
+			unzip -oqq "$LOCALZIP"
+			rm "$LOCALZIP"
+
+			latestver > ns_version.txt
+			echo "Finished updating to: $(latestver)"
+			;;
+		*)	echo "err: Unknown argument, '$i'";;
+	esac
+done

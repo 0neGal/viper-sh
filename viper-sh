@@ -43,7 +43,15 @@ exclude() {
 
 getlatest() {
 	LATESTJSON="$(curl --silent 'https://api.github.com/repos/R2Northstar/Northstar/releases/latest')"
+	/bin/echo $LATESTJSON | jq .message | grep -q "API rate limit" && {
+		out "err: You're currently rate limited!"
+		return 1
+	}
+	
+	return 0
 }
+
+getlatest || exit 1
 
 latest() {
 	[ "$LATESTJSON" = "" ] && getlatest

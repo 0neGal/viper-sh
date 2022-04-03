@@ -36,6 +36,13 @@ for i in $@; do
 	case $i in
 		"--update")
 			cd "$GAMEPATH"
+
+			[ "$(cat ns_version.txt 2> /dev/null)" = "$(latestver)" ] && {
+				echo "$@" | grep -qe "--force" || {
+					echo "Already on newest version!"
+					exit 0
+				}
+			}
 			
 			ZIP="$(latestzip)"
 			LOCALZIP="$(echo $ZIP | sed 's/.*\///g')"
@@ -49,6 +56,7 @@ for i in $@; do
 			latestver > ns_version.txt
 			echo "Finished updating to: $(latestver)"
 			;;
+		"--force") ;;
 		*)	echo "err: Unknown argument, '$i'";;
 	esac
 done

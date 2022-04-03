@@ -16,6 +16,25 @@ LATESTZIP=""
 	exit 1
 }
 
+exclude() {
+	EXCLUDE="
+		ns_startup_args.txt
+		ns_startup_args_dedi.txt
+	"
+
+	[ "$1" = "--revert" ] && {
+		for i in $EXCLUDE; do
+			mv "$GAMEPATH"/"$i.excluded" "$GAMEPATH"/"$i"
+		done
+
+		return
+	}
+
+	for i in $EXCLUDE; do
+		mv "$GAMEPATH"/"$i" "$GAMEPATH"/"$i.excluded"
+	done
+}
+
 latestzip() {
 	[ "$LATESTZIP" = "" ] && {
 		LATESTZIP="$(curl --silent "https://api.github.com/repos/R2Northstar/Northstar/releases/latest" | jq -r .assets[0].browser_download_url)"
@@ -49,9 +68,14 @@ for i in $@; do
 
 			echo "Downloading zip..."
 			wget "$ZIP" > /dev/null
+
+			exclude
+
 			echo "Extracting zip..."
 			unzip -oqq "$LOCALZIP"
 			rm "$LOCALZIP"
+
+			exclude --revert
 
 			latestver > ns_version.txt
 			echo "Finished updating to: $(latestver)"

@@ -34,12 +34,15 @@ exclude() {
 	done
 }
 
+getlatest() {
+	LATESTJSON="$(curl --silent 'https://api.github.com/repos/R2Northstar/Northstar/releases/latest')"
+}
+
 latest() {
-	[ "$LATESTJSON" = "" ] && {
-		LATESTJSON="$(curl --silent 'https://api.github.com/repos/R2Northstar/Northstar/releases/latest')"
-	}
+	[ "$LATESTJSON" = "" ] && getlatest
 
 	case $1 in
+		"get") getlatest;;
 		"ver") /bin/echo "$LATESTJSON" | jq -r .tag_name;;
 		"zip") /bin/echo "$LATESTJSON" | jq -r .assets[0].browser_download_url;;
 	esac
@@ -53,7 +56,7 @@ for i in $@; do
 			[ "$(cat ns_version.txt 2> /dev/null)" = "$(latest ver)" ] && {
 				echo "$@" | grep -qe "--force" || {
 					echo "Already on newest version!"
-					exit 0
+					exit 1
 				}
 			}
 			
@@ -75,6 +78,14 @@ for i in $@; do
 			echo "Finished updating to: $(latest ver)"
 			;;
 		"--force") ;;
+		"--daemon")
+			while true; do
+				getlatest
+				$0 --update
+
+				sleep 5m
+			done
+			;;
 		*)	echo "err: Unknown argument, '$i'";;
 	esac
 done

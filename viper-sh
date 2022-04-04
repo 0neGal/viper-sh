@@ -61,6 +61,7 @@ latest() {
 	esac
 }
 
+func() {
 for i in $@; do
 	case $i in
 		"--update")
@@ -78,12 +79,12 @@ for i in $@; do
 			ZIP="$(latest zip)"
 			LOCALZIP="$(echo $ZIP | sed 's/.*\///g')"
 
-			out "Downloading zip..."
+			out "Downloading..."
 			wget "$ZIP" > /dev/null
 
 			exclude
 
-			out "Extracting zip..."
+			out "Extracting..."
 			unzip -oqq "$LOCALZIP"
 			rm "$LOCALZIP"
 
@@ -96,7 +97,7 @@ for i in $@; do
 		"--daemon")
 			while true; do
 				getlatest || exit 1
-				$0 --update --quiet && {
+				func --update && {
 					out "Finished updating to: $(latest ver)"
 				} || {
 					out "No new version found."
@@ -131,6 +132,63 @@ for i in $@; do
 
 			echo "Installed mods: $MODCOUNT $MODS"
 			;;
+		"--findmods")
+			#PACKAGES="$(curl --silent https://northstar.thunderstore.io/api/v1/package/)"
+			PACKAGES="$(cat ~/pkgs.json)"
+			NAMES="$(/bin/echo $PACKAGES | jq '.[].name' -r)"
+			ITERATOR="0"
+			for i in $NAMES; do
+				echo $ITERATOR $i
+				ITERATOR="$(($ITERATOR+1))"
+			done | fzf | awk '{ print $1 }' | {
+				MOD="$(xargs)"
+				/bin/echo $PACKAGES | jq -r ".[$MOD].name" | out "Installing: $(cat -)"
+				/bin/echo $PACKAGES | jq -r ".[$MOD].versions[0].download_url" | func --installmod="$(cat -)"
+			}
+
+			;;
+		"--installmod="*)
+			MOD="$(echo $i | sed "s/--installmod=//g")"
+
+			cd "$GAMEPATH"
+			rm tmp -rf
+
+			echo "$MOD" | grep -Eq "^https://" && {
+				mkdir -p tmp; cd tmp
+
+				out "Downloading..."
+				wget "$MOD" > /dev/null && {
+					unzip -oqq *zip && {
+						chmod 777 . -R
+
+						[ -f "mods/mod.json" ] && {
+							NAME="$(jq .Name mods/mod.json -r)"
+							rm -rf "../R2Northstar/mods/$NAME"
+							mv -f mods "../R2Northstar/mods/$NAME"
+							cd ..
+
+							out "Installed."
+							exit
+						}
+
+						for i in mods/*/*; do
+							echo $i | grep -Eq ".*/mod.json" && {
+								rm -rf "../R2Northstar/$(dirname $i)"
+								mv -f "$(dirname $i)" ../R2Northstar/mods
+							}
+						done
+					}
+				}
+
+
+				cd ..
+				rm tmp -rf
+
+				out "Installed."
+				exit
+			}
+			;;
 		*)	echo "err: Unknown argument, '$i'";;
 	esac
 done
+}; func $@

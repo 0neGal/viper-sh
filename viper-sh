@@ -64,6 +64,26 @@ latest() {
 func() {
 for i in $@; do
 	case $i in
+		"--help")
+cat <<EOF
+options:
+ --help
+     shows this help message
+
+ --update
+     updates Northstar to the latest version 
+ --force
+     if you're on the latest version this forcefully re-installs it
+
+ --mods
+     lists out the installed mods
+ --findmods
+     uses fzf to make it easy to install mods from Thunderstore
+ --installmod
+     when provided with a URL (--installmod=<url>) it assumes it's a zip
+     containing a mod, and downloads it, then installs it
+EOF
+			;;
 		"--update")
 			getlatest || exit 1
 

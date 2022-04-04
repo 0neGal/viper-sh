@@ -51,8 +51,6 @@ getlatest() {
 	return 0
 }
 
-getlatest || exit 1
-
 latest() {
 	[ "$LATESTJSON" = "" ] && getlatest
 
@@ -66,6 +64,8 @@ latest() {
 for i in $@; do
 	case $i in
 		"--update")
+			getlatest || exit 1
+
 			cd "$GAMEPATH"
 
 			[ "$(cat ns_version.txt 2> /dev/null)" = "$(latest ver)" ] && {
@@ -95,7 +95,7 @@ for i in $@; do
 		"--force") ;;
 		"--daemon")
 			while true; do
-				getlatest
+				getlatest || exit 1
 				$0 --update --quiet && {
 					out "Finished updating to: $(latest ver)"
 				} || {
@@ -104,6 +104,32 @@ for i in $@; do
 
 				sleep 5m
 			done
+			;;
+		"--mods")
+			MODPATH="$GAMEPATH/R2Northstar/mods"
+			[ ! -d "$MODPATH" ] && {
+				out "err: Mod folder missing"
+				exit 1
+			}
+
+			MODS=""
+			MODCOUNT="0"
+			for i in "$MODPATH"/*; do
+				[ -d "$i" ] && {
+					[ -f "$i/mod.json" ] && {
+						MODCOUNT="$(($MODCOUNT+1))"
+						MOD="$(jq -r '[.Name, .Version] | @tsv' "$i/mod.json")" 2> /dev/null || {
+							out "err: $(basename "$i") has an improperly formatted mod.json"
+							MODS="  $MODS\n $(basename "$i") unknown"
+							continue
+						}
+
+						MODS="  $MODS\n $(echo $MOD | awk '{print $1}') $(echo $MOD | awk '{print $2}')"
+					}
+				}
+			done
+
+			echo "Installed mods: $MODCOUNT $MODS"
 			;;
 		*)	echo "err: Unknown argument, '$i'";;
 	esac

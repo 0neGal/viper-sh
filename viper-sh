@@ -18,14 +18,18 @@ err() {
 	}
 }
 
-[ "$GAMEPATH" = "" ] && {
-	err "\$GAMEPATH not set, and or viper.json was not able to be read."
-	exit 1
-}
+echo "$ARGS" | grep -qe "--setpath" || {
+	[ "$GAMEPATH" = "" ] && {
+		err "\$GAMEPATH not set, and or viper.json was not able to be read."
+		exit 1
+	}
 
-[ ! -d "$GAMEPATH" ] && {
-	err "'$GAMEPATH' does not exist!"
-	exit 1
+	[ ! -d "$GAMEPATH" ] && {
+		[ "$GAMEPATH" != "" ] && {
+			err "'$GAMEPATH' does not exist!"
+			exit 1
+		}
+	}
 }
 
 exclude() {
@@ -76,6 +80,8 @@ options:
  --help
      shows this help message
 
+ --setpath
+     sets the path permanently in your viper.json
  --update
      updates Northstar to the latest version 
  --force
@@ -89,6 +95,26 @@ options:
      when provided with a URL (--installmod=<url>) it assumes it's a zip
      containing a mod, and downloads it, then installs it
 EOF
+			;;
+		"--setpath"|"--setpath="*)
+			ARG="$(echo $i | sed 's/--setpath=//')"
+
+			[ "$ARG" != "" ] && {
+				CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+				
+				[ -f "$CONFIG/viper.json" ] && {
+					JSON="$(jq ".gamepath = \"$ARG\"" "$CONFIG/viper.json")"
+					echo $JSON > "$CONFIG/viper.json"
+					exit
+				}
+
+				JSON="$(echo "{\"gamepath\": \"$ARG\"}" | jq)"
+				echo $JSON > "$CONFIG/viper.json"
+
+				exit
+			}
+
+			err "No valid URL given!"
 			;;
 		"--update")
 			getlatest || exit 1

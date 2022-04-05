@@ -12,13 +12,19 @@ out() {
 	}
 }
 
+err() {
+	echo "$ARGS" | grep -qe "--quiet" || {
+		echo "err: $@" 1>&2
+	}
+}
+
 [ "$GAMEPATH" = "" ] && {
-	out "err: \$GAMEPATH not set, and or viper.json was not able to be read."
+	err "\$GAMEPATH not set, and or viper.json was not able to be read."
 	exit 1
 }
 
 [ ! -d "$GAMEPATH" ] && {
-	out "err: '$GAMEPATH' does not exist!"
+	err "'$GAMEPATH' does not exist!"
 	exit 1
 }
 
@@ -44,7 +50,7 @@ exclude() {
 getlatest() {
 	LATESTJSON="$(curl --silent 'https://api.github.com/repos/R2Northstar/Northstar/releases/latest')"
 	/bin/echo $LATESTJSON | jq .message | grep -q "API rate limit" && {
-		out "err: You're currently rate limited!"
+		err "You're currently rate limited!"
 		return 1
 	}
 	
@@ -129,7 +135,7 @@ EOF
 		"--mods")
 			MODPATH="$GAMEPATH/R2Northstar/mods"
 			[ ! -d "$MODPATH" ] && {
-				out "err: Mod folder missing"
+				err "Mod folder missing"
 				exit 1
 			}
 
@@ -140,7 +146,7 @@ EOF
 					[ -f "$i/mod.json" ] && {
 						MODCOUNT="$(($MODCOUNT+1))"
 						MOD="$(jq -r '[.Name, .Version] | @tsv' "$i/mod.json")" 2> /dev/null || {
-							out "err: $(basename "$i") has an improperly formatted mod.json"
+							err "$(basename "$i") has an improperly formatted mod.json"
 							MODS="  $MODS\n $(basename "$i") unknown"
 							continue
 						}
@@ -208,9 +214,14 @@ EOF
 				exit
 			}
 
-			out "err: No valid URL given!"
+			err "No valid URL given!"
 			;;
-		*)	echo "err: Unknown argument, '$i'";;
+		*)	err "Unknown argument, '$i'"; exit 1;;
 	esac
 done
 }; func $@
+
+[ -z "$@" ] && {
+	err "Missing argument!"
+	exit 1
+}

@@ -20,7 +20,7 @@ err() {
 	}
 }
 
-echo "$ARGS" | grep -qe "--setpath" || {
+verifypath() {
 	[ "$GAMEPATH" = "" ] && {
 		err "\$GAMEPATH not set, and or viper.json was not able to be read."
 		exit 1
@@ -122,6 +122,7 @@ EOF
 			err "No valid URL given!"
 			;;
 		"--update")
+			verifypath
 			getlatest || exit 1
 
 			cd "$GAMEPATH"
@@ -152,6 +153,7 @@ EOF
 			;;
 		"--force") ;;
 		"--daemon")
+			verifypath
 			while true; do
 				getlatest || exit 1
 				func --update && {
@@ -164,6 +166,8 @@ EOF
 			done
 			;;
 		"--mods")
+			verifypath
+
 			MODPATH="$GAMEPATH/R2Northstar/mods"
 			[ ! -d "$MODPATH" ] && {
 				err "Mod folder missing"
@@ -190,6 +194,8 @@ EOF
 			echo "Installed mods: $MODCOUNT $MODS"
 			;;
 		"--findmods")
+			verifypath
+
 			#PACKAGES="$(curl --silent https://northstar.thunderstore.io/api/v1/package/)"
 			PACKAGES="$(cat ~/pkgs.json)"
 			NAMES="$(/bin/echo $PACKAGES | jq '.[].name' -r)"
@@ -205,6 +211,8 @@ EOF
 
 			;;
 		"--installmod"|"--installmod="*)
+			verifypath
+
 			MOD="$(echo $i | sed "s/--installmod=//g")"
 
 			cd "$GAMEPATH"

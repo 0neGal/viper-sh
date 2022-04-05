@@ -196,8 +196,7 @@ EOF
 		"--findmods")
 			verifypath
 
-			#PACKAGES="$(curl --silent https://northstar.thunderstore.io/api/v1/package/)"
-			PACKAGES="$(cat ~/pkgs.json)"
+			PACKAGES="$(curl --silent https://northstar.thunderstore.io/api/v1/package/)"
 			NAMES="$(/bin/echo $PACKAGES | jq '.[].name' -r)"
 			ITERATOR="0"
 			for i in $NAMES; do

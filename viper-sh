@@ -1,5 +1,7 @@
 #!/bin/sh
 
+VERSION="1.0.0"
+
 ARGS="$@"
 JSONPATH="$(jq -r .gamepath "$XDG_CONFIG_HOME/viper.json" 2> /dev/null)"
 GAMEPATH="${GAMEPATH:-$JSONPATH}"
@@ -79,6 +81,8 @@ cat <<EOF
 options:
  --help
      shows this help message
+ --version
+     shows the version of ViperSH
 
  --setpath
      sets the path permanently in your viper.json
@@ -96,6 +100,7 @@ options:
      containing a mod, and downloads it, then installs it
 EOF
 			;;
+		"--version") echo "ViperSH v$VERSION" ;;
 		"--setpath"|"--setpath="*)
 			ARG="$(echo $i | sed 's/--setpath=//')"
 

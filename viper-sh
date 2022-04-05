@@ -167,7 +167,7 @@ EOF
 			}
 
 			;;
-		"--installmod="*)
+		"--installmod"|"--installmod="*)
 			MOD="$(echo $i | sed "s/--installmod=//g")"
 
 			cd "$GAMEPATH"
@@ -207,6 +207,8 @@ EOF
 				out "Installed."
 				exit
 			}
+
+			out "err: No valid URL given!"
 			;;
 		*)	echo "err: Unknown argument, '$i'";;
 	esac

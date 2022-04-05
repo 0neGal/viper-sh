@@ -90,6 +90,8 @@ options:
      updates Northstar to the latest version 
  --force
      if you're on the latest version this forcefully re-installs it
+ --daemon
+     checks every 5 minutes and updates Northstar if there's an update
 
  --mods
      lists out the installed mods

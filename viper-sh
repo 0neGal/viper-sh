@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 
 ARGS="$@"
 JSONPATH="$(jq -r .gamepath "$XDG_CONFIG_HOME/viper.json" 2> /dev/null)"
@@ -223,7 +223,7 @@ EOF
 				mkdir -p tmp; cd tmp
 
 				out "Downloading..."
-				wget "$MOD" > /dev/null && {
+				wget --trust-server-names "$MOD" > /dev/null && {
 					unzip -oqq *zip && {
 						chmod 777 . -R
 

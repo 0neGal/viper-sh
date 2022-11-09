@@ -1,9 +1,11 @@
 #!/bin/sh
 
-VERSION="1.0.1"
+VERSION="1.0.2"
+
+CONFIGDIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 ARGS="$@"
-JSONPATH="$(jq -r .gamepath "$XDG_CONFIG_HOME/viper.json" 2> /dev/null)"
+JSONPATH="$(jq -r .gamepath "$CONFIGDIR/viper.json" 2> /dev/null)"
 GAMEPATH="${GAMEPATH:-$JSONPATH}"
 
 LATESTJSON=""
@@ -107,16 +109,16 @@ EOF
 			ARG="$(echo $i | sed 's/--setpath=//')"
 
 			[ "$ARG" != "" ] && {
-				CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+				CONFIG="$CONFIGDIR/viper.json"
 				
-				[ -f "$CONFIG/viper.json" ] && {
-					JSON="$(jq ".gamepath = \"$ARG\"" "$CONFIG/viper.json")"
-					echo $JSON > "$CONFIG/viper.json"
+				[ -f "$CONFIG" ] && {
+					JSON="$(jq ".gamepath = \"$ARG\"" "$CONFIG")"
+					echo $JSON > "$CONFIG"
 					exit
 				}
 
 				JSON="$(echo "{\"gamepath\": \"$ARG\"}" | jq)"
-				echo $JSON > "$CONFIG/viper.json"
+				echo $JSON > "$CONFIG"
 
 				exit
 			}
